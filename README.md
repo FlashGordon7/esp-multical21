@@ -1,5 +1,11 @@
 # esp-multical21
 
+CRC has been added to eliminate error readings.
+
+User and Password have been added to MQTT.
+
+Upcomming.. More info data.
+
 Added MQTT data upload to the project from weetmuts original the values was only send to the serial terminal.
 And how the data is written to the serial terminal.
 
