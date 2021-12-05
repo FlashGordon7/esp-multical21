@@ -12,8 +12,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#include <PubSubClient.h>
 #include "WMbusFrame.h"
+#include "CRC16.h"
+#include "CRC.h"
+
 
 void  mqttDebug(const char* debug_str);
 void  mqttMyData(const char* debug_str);
@@ -24,30 +27,41 @@ WMBusFrame::WMBusFrame()
   aes128.setKey(key, sizeof(key));
 }
 
+
 void WMBusFrame::check()
 {
-    // check meterId
-    for (uint8_t i = 0; i< 4; i++)
-    {
-        if (meterId[i] != payload[6-i])
-        {
-          isValid = false;
-          return;
-        }
-    }
+int16_t crcReg = ((uint16_t)payload[length - 2] << 8) | payload[length-1];
+int16_t crcCal = (crc16((uint8_t *) payload, length-2, 0x3D65, 0x0000, 0xFFFF, false, false));
+// check meterId
 
-    // TBD: check crc
-    isValid = true;
+        if (((meterId[3] == payload[4]) && (meterId[2] == payload[5]) && (meterId[1] == payload[6]) && meterId[0] == payload[7]) && (0x44 == payload[1]) && (crcReg == crcCal))// && (0x25 == payload[0])) // 25 skal fjernes
+        {
+
+          isValid = true;
+           return;
+   
+        } else {
+
+          isValid = false;
+           return;
+
+        }
+    
+
+
+    
 }
+
 
 void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
 {
-    // init positions for compact frame
+    // init positions for compact frame  
   int pos_tt = 9; // total consumption
   int pos_tg = 13; // target consumption
   int pos_ic = 7; // info codes
   int pos_ft = 17; // flow temp
   int pos_at = 18; // ambient temp
+
 
   if (data[2] == 0x78) // long frame
   {
@@ -57,8 +71,10 @@ void WMBusFrame::printMeterInfo(uint8_t *data, size_t len)
     pos_ic = 6;
     pos_ft = 22;
     pos_at = 25;
+Serial.print("Long frame");
   }
-
+//Serial.printf("%02X", data);
+  
   char total[10];
   char mqttstring[25];
   char mqttjsondstring[100];
@@ -108,19 +124,49 @@ mqttMyDataJson(mqttjsondstring);
 
 }
 
+ // starting with 1! index 0 is l-field, 1 c-field, 2-3 m-field, 4-9 a-field, 10 crc-field, DATA, Last 2 CRC
+    // L-Field: Length Indication 1 byte
+    // C-Field: Communication Indication (Request, SEND, RESPONSE EXPECTED, ACK etc...) 1 byte 
+    // M-Field: Sending Device Manufacturer ID 2 bytes 
+    // A-Field: Address of sending device, consists of { ID number(4 bytes), version(1 byte), device type code(1 byte) } 6 bytes
+    // CI-field: Control Information which indicates protocol used at upper layer 1 byte
+    // CRC-field: Cyclic Redundancy Check 2 bytes, CRC is calculated from L-field to DATA end. Stop before CRC byte
+
+
+
+
 void WMBusFrame::decode()
 {
   // check meterId, CRC
+//Serial.println("");
+// Serial.println("");
+// Serial.print("Checksum: ");
+// uint16_t crcReg = ((uint16_t)payload[length - 2] << 8) | payload[length-1];
+//  Serial.print((payload[length - 1] << 8) | payload[length]);
+CRC16 crc;
+
+//Serial.print(crcReg, HEX);
+// Serial.println("");
+// Serial.print("Payload: "); 
+
+//    for (uint8_t i = 0; i< ((length)-2); i++)
+ //   {
+//Serial.printf("%02X", payload[i]);
+//      }
+//  Serial.println("");
+//Serial.print("Calculated checksum: ");
+//  Serial.println(crc16((uint8_t *) payload, length-2, 0x3D65, 0x0000, 0xFFFF, false, false), HEX);
+  
   check();
   if (!isValid) return;
 
-  uint8_t cipherLength = length - 2 - 16; // cipher starts at index 16, remove 2 crc bytes
-  memcpy(cipher, &payload[16], cipherLength);
+  uint8_t cipherLength = length - 18; // cipher starts at index 16, remove 2 crc bytes
+  memcpy(cipher, &payload[17], cipherLength);
 
   memset(iv, 0, sizeof(iv));   // padding with 0
-  memcpy(iv, &payload[1], 8);
-  iv[8] = payload[10];
-  memcpy(&iv[9], &payload[12], 4);
+  memcpy(iv, &payload[2], 8);
+  iv[8] = payload[11];
+  memcpy(&iv[9], &payload[13], 4);
 
   aes128.setIV(iv, sizeof(iv));
   aes128.decrypt(plaintext, (const uint8_t *) cipher, cipherLength);
