@@ -1,6 +1,8 @@
 // defines for the credentials
 #define SSID1   "MyWiFi"
 #define PW1     "MyWiFiPassword"
+#define MQTTUS  "MqttUser"
+#define MQTTPA  "MqttPass"
 #define MQTT1   "192.168.200.10"
 #define SSID2   "ssid2"
 #define PW2     "pass2"
