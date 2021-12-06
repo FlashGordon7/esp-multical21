@@ -30,7 +30,7 @@ WMBusFrame::WMBusFrame()
 
 void WMBusFrame::check()
 {
-int16_t crcReg = ((uint16_t)payload[length - 2] << 8) | payload[length-1];
+int16_t crcReg = ((uint8_t)payload[length - 2] << 8) | payload[length-1];
 int16_t crcCal = (crc16((uint8_t *) payload, length-2, 0x3D65, 0x0000, 0xFFFF, false, false));
 // check meterId
 
