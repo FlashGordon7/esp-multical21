@@ -194,10 +194,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int len)
 bool mqttConnect()
 {
   mqttClient.setServer(credentials[cred][2], 1883);
+  
   mqttClient.setCallback(mqttCallback);
+  
 
   // connect client to retainable last will message
-  return mqttClient.connect(ESP_NAME, "/watermeter/online", 0, true, "False");
+  return mqttClient.connect(ESP_NAME, MQTTUS, MQTTPA);
+//  return mqttClient.connect(ESP_NAME, "/watermeter/online", 0, true, "False");
 }
 
 void mqttSubscribe()
