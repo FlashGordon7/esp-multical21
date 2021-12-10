@@ -246,14 +246,21 @@ void WaterMeter::receive(WMBusFrame * frame)
        && (p1 == 0x54) && (p2 == 0x3D) )
   { 
     // 3rd byte is payload length
-    frame->length = payloadLength;
+    frame->length = (payloadLength)+1;
 
-    //Serial.printf("%02X", lfield);
+    //Serial.printf("%02X", payloadLength);
 
-    // starting with 1! index 0 is lfield
+    // starting with 1! index 0 is l-field, 1 c-field, 2-3 m-field, 4-9 a-field, 10 crc-field, DATA, Last 2 CRC
+    // L-Field: Length Indication 1 byte
+    // C-Field: Communication Indication (Request, SEND, RESPONSE EXPECTED, ACK etc...) 1 byte
+    // M-Field: Sending Device Manufacturer ID 2 bytes
+    // A-Field: Address of sending device, consists of { ID number(4 bytes), version(1 byte), device type code(1 byte) } 6 bytes
+    // CI-field: Control Information which indicates protocol used at upper layer 1 byte
+    // CRC-field: Cyclic Redundancy Check 2 bytes, CRC is calculated from L-field to DATA end. Stop before CRC byte
+      frame->payload[0] = payloadLength;
     for (int i = 0; i < payloadLength; i++)
     {
-	    frame->payload[i] = readByteFromFifo();
+	    frame->payload[i+1] = readByteFromFifo();
     }
 
     // do some checks: my meterId, crc ok
