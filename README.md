@@ -1,6 +1,6 @@
 # esp-multical21
 
-CRC has been added to eliminate error readings.
+CRC has been added to eliminate wrong readings.
 
 User and Password have been added to MQTT.
 
