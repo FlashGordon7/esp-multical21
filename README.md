@@ -1,4 +1,5 @@
 # esp-multical21
+Changed Gain-input for better range
 
 CRC has been added to eliminate wrong readings.
 
