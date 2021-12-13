@@ -1,7 +1,9 @@
 # esp-multical21
+Added RSSI level on serial log
+
 Changed Gain-input for better range
 
-CRC has been added to eliminate wrong readings.
+CRC has been added to eliminate corrupted readings.
 
 User and Password have been added to MQTT.
 
