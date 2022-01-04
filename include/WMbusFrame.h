@@ -7,6 +7,18 @@
 #include <CTR.h>
 #include "credentials.h"
 
+#define INFO_CODE_DRY 0x01
+#define INFO_CODE_DRY_SHIFT (4+0)
+
+#define INFO_CODE_REVERSE 0x02
+#define INFO_CODE_REVERSE_SHIFT (4+3)
+
+#define INFO_CODE_LEAK 0x04
+#define INFO_CODE_LEAK_SHIFT (4+6)
+
+#define INFO_CODE_BURST 0x08
+#define INFO_CODE_BURST_SHIFT (4+9)
+
 class WMBusFrame
 {
   public:
@@ -20,6 +32,7 @@ class WMBusFrame
     uint8_t iv[16];
     void check(void);
     void printMeterInfo(uint8_t *data, size_t len);
+    void decodeTime(int time, char* outStr);
 
   public:
     // check frame and decrypt it

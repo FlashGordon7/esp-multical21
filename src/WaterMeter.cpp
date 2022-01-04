@@ -171,6 +171,13 @@ void WaterMeter::initializeRegisters(void)
   writeReg(CC1101_TEST2, CC1101_DEFVAL_TEST2);
   writeReg(CC1101_TEST1, CC1101_DEFVAL_TEST1);
   writeReg(CC1101_TEST0, CC1101_DEFVAL_TEST0);
+
+  Serial.print("CC1101_PARTNUM "); //cc1101=0
+  Serial.println(readReg(CC1101_PARTNUM, CC1101_STATUS_REGISTER));
+  Serial.print("CC1101_VERSION "); //cc1101=4
+  Serial.println(readReg(CC1101_VERSION, CC1101_STATUS_REGISTER));
+  Serial.printf("CC1101_IOCFG0 [%02X]: ", CC1101_DEFVAL_IOCFG0);
+  Serial.println(readReg(CC1101_IOCFG0, CC1101_CONFIG_REGISTER));
 }
 
 volatile boolean packetAvailable = false;
@@ -191,14 +198,21 @@ bool WaterMeter::isFrameAvailable(void)
     //Serial.println("packet received");
     // Disable wireless reception interrupt
     detachInterrupt(digitalPinToInterrupt(CC1101_GDO0));
+    digitalWrite(LED_BUILTIN, LOW); // on
  
     // clear the flag
     packetAvailable = false;
  
     WMBusFrame frame;
  
+    Serial.print("LQI: ");
+    Serial.print(readReg(CC1101_LQI, CC1101_STATUS_REGISTER));
+    Serial.print(" - RSSI: ");
+    Serial.println(readReg(CC1101_RSSI, CC1101_STATUS_REGISTER));
+
     receive(&frame);
 
+    digitalWrite(LED_BUILTIN, HIGH); // off
     // Enable wireless reception interrupt
     attachInterrupt(digitalPinToInterrupt(CC1101_GDO0), GD0_ISR, FALLING);
     return frame.isValid;
@@ -237,13 +251,13 @@ void WaterMeter::receive(WMBusFrame * frame)
   // read preamble, should be 0x543D
   uint8_t p1 = readByteFromFifo();
   uint8_t p2 = readByteFromFifo();
-  //Serial.printf("%02x%02x", p1, p2);
+  // Serial.printf("%02x%02x", p1, p2);
+  // Serial.println("");
 
   uint8_t payloadLength = readByteFromFifo();
 
   // is it Mode C1, frame B and does it fit in the buffer
-  if ( (payloadLength < WMBusFrame::MAX_LENGTH )
-       && (p1 == 0x54) && (p2 == 0x3D) )
+  if ( (payloadLength < WMBusFrame::MAX_LENGTH ) && (p1 == 0x54) && (p2 == 0x3D) )
   { 
     // 3rd byte is payload length
     frame->length = (payloadLength)+1;

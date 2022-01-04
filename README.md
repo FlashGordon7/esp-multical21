@@ -1,5 +1,5 @@
 # esp-multical21
-Added RSSI level on serial log
+Added LQI and RSSI level on serial log
 
 Changed Gain-input for better range
 
@@ -7,7 +7,7 @@ CRC has been added to eliminate corrupted readings.
 
 User and Password have been added to MQTT.
 
-Upcomming.. More info data.
+Added: Dry, Reverse Leak, Burst
 
 Added MQTT data upload to the project from weetmuts original the values was only send to the serial terminal.
 And how the data is written to the serial terminal.
